@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import {NeuralNetwork} from "./neural/nn";
 import './App.css';
 
 const HEIGHT = 500;
@@ -15,6 +16,8 @@ class Bird {
     this.y = 150;
     this.gravity = 0;
     this.velocity = 0.1;
+
+    this.brain = new NeuralNetwork(2,5,1);
   };
 
   draw() {
@@ -28,7 +31,37 @@ class Bird {
     this.gravity += this.velocity;
     this.gravity = Math.min(4, this.gravity);
     this.y += this.gravity;
+
+    if(this.y < 0) {
+      this.y = 0;
+    } else if(this.y > HEIGHT) {
+      this.y = HEIGHT
+    }
+
+    this.think();
   };
+
+  think = () => {
+
+    // inputs:
+    // [bird.x, bird.y]
+    // [closestPipe.x, pipe.y]
+    // [closestPipe.x, pipe.y + pipe.height]
+
+    const inputs = [
+      this.x / WIDTH,
+      this.y / HEIGHT,
+    ];
+    
+    const output = this.brain.predict(inputs);
+    
+
+    console.log(output);
+    if(output[0] < 0.5) {
+      this.jump();
+    }
+
+  }
 
   jump = () => {
     this.gravity = -4;
@@ -60,6 +93,7 @@ class Pipe {
     if ((this.x + PIPE_WIDTH) < 0) {
       this.isDead = true
     }
+
   }
 }
 
@@ -75,7 +109,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    document.addEventListener('keydown', this.onKeyDown);
+    // document.addEventListener('keydown', this.onKeyDown);
     const ctx = this.getCtx();
     this.pipes = this.generatePipes();
     this.birds = [new Bird(ctx)];
@@ -83,11 +117,12 @@ class App extends Component {
     this.loop = setInterval(this.gameLoop, 1000 / FPS);
   };
 
-  onKeyDown = (e) => {
-    if (e.code === 'Space') {
-      this.birds[0].jump()
-    }
-  }
+  //USER ONY MODE
+  // onKeyDown = (e) => {
+  //   if (e.code === 'Space') {
+  //     this.birds[0].jump()
+  //   }
+  // }
 
   getCtx = () => this.canvasRef.current.getContext('2d');
 
@@ -120,9 +155,9 @@ class App extends Component {
     this.birds.map(bird => bird.update());
 
     if(this.isGameOver()){
-      alert('game over')
+      // alert('game over')
 
-      clearInterval(this.loop);
+      // clearInterval(this.loop);
     }
   }
 
@@ -154,6 +189,9 @@ class App extends Component {
         >
 
         </canvas>
+        <div onClick={()=> this.setState({})}>
+          {this.frameCount}
+        </div>
       </div>
     );
   };
